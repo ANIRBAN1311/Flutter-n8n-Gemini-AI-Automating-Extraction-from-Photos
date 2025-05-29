@@ -1,0 +1,189 @@
+
+{
+  "name": "ai_agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ec84e778-aa09-41de-85e3-0c54068cdd1e",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bec1dfb5-d4f0-46f6-8cf3-23b9db59c59d",
+      "name": "Webhook",
+      "webhookId": "ec84e778-aa09-41de-85e3-0c54068cdd1e"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body }}
+You are an AI assistant specialized in extracting structured data from images containing quiz questions. When you receive a photo, follow these steps:
+
+1. Analyze the image carefully to detect if it contains a multiple-choice question with options.
+
+2. If the image contains a question with options:
+   - Extract the question text precisely (row 1)
+   - Extract all options (A-E) accurately (rows 2-6)
+   - Identify the correct answer (row 7)
+   - Format the data as: [{question:question, optionA:optionA, optionB:optionB, optionC:optionC, optionD:optionD, optionE:optionE, answer:A}]
+     (Note: optionE should be empty if not present)
+   - Submit this data to the specified Google Sheet as a new row
+   - remove question numbers,
+   - Respond with: {"status":true,"message":"Questions extracted successfully",Questions:[{question:question, optionA:optionA, optionB:optionB, optionC:optionC, optionD:optionD, optionE:optionE, answer:A}]}
+
+3. If the image does not contain a clear question/answer format:
+   - Respond with: {"status":false,"message":"Questions extracted failed"}
+
+4. For ambiguous cases where you're unsure:
+   - Respond with: {"status":false,"message":"Questions extracted failed"}
+
+Important requirements:
+- Maintain original wording from the image exactly
+- Preserve any special formatting, symbols or numbering
+- Case sensitivity matters for answer options
+- If option E is missing, leave that field empty
+- The answer field should contain just the letter (A-E) of the correct option
+
+Always verify your extraction matches the image content perfectly before submitting.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        220,
+        0
+      ],
+      "id": "bac70773-91b2-4a51-9cdc-1838f5385285",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        220,
+        220
+      ],
+      "id": "afbc6fb7-4591-479e-8158-9880d21487e8",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "J15JfPofwY5H3WAz",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cb50a52c-646a-4bea-814e-f401939e8320",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "e2f073c0-1caa-4cef-b67e-b79a63ae20e8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1N3QUvkritOVtHgw_idgFpgytdmF0ozF5TQWDx42L214",
+          "mode": "list",
+          "cachedResultName": "questions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1N3QUvkritOVtHgw_idgFpgytdmF0ozF5TQWDx42L214/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1N3QUvkritOVtHgw_idgFpgytdmF0ozF5TQWDx42L214/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "question"
+          ],
+          "schema": [
+            {
+              "id": "question",
+              "displayName": "question",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "optionA",
+              "displayName": "optionA",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "optionB",
+              "displayName": "optionB",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "optionC",
+              "displayName": "optionC",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "optionD",
+              "displayName": "optionD",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "optionE",
+              "displayName": "optionE",
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "answer",
+              "displayName": "answer",
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+         ...
+    ]
+}
